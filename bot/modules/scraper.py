@@ -247,7 +247,7 @@ def scrapper(update, context):
             links.append(hy['href'])
         for txt in links:
             message = '/qbleech ' + txt
-            sendMessage(txt, context.bot, update.message)
+            sendMessage(message, context.bot, update.message)
 
    
 
