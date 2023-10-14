@@ -246,6 +246,7 @@ def scrapper(update, context):
         for hy in mystx:
             links.append(hy['href'])
         for txt in links:
+            message = '/qbleech ' + txt
             sendMessage(txt, context.bot, update.message)
 
    
