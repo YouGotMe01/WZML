@@ -2,10 +2,7 @@ from feedparser import parse as feedparse
 from time import sleep
 from telegram.ext import CommandHandler, CallbackQueryHandler
 from threading import Lock, Thread
-import re
-from re import S
-from requests import get as rget, head as rhead
-from bs4 import BeautifulSoup, NavigableString, Tag
+
 from bot import dispatcher, job_queue, rss_dict, LOGGER, DB_URI, RSS_DELAY, RSS_CHAT_ID, RSS_COMMAND, AUTO_DELETE_MESSAGE_DURATION
 from bot.helper.telegram_helper.message_utils import sendMessage, editMessage, sendMarkup, auto_delete_message, sendRss
 from bot.helper.telegram_helper.filters import CustomFilters
@@ -222,20 +219,14 @@ def rss_monitor(context):
                     url = rss_d.entries[feed_count]['links'][1]['href']
                 except IndexError:
                     url = rss_d.entries[feed_count]['link']
-                    res = rget(url)
-                    soup = BeautifulSoup(res.text, 'html.parser')
-                    mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
-                    for hy in mystx:
-                        links.append(hy['href'])
-                    for txt in links:
-                        if RSS_COMMAND is not None:
-                            feed_msg = f"{RSS_COMMAND} {txt}\nTag: @isaiminiprime_admin 6143946435"
-                        else:
-                            feed_msg = f"<b>Name: </b><code>{rss_d.entries[feed_count]['title'].replace('>', '').replace('<', '')}</code>\n\n"
-                            feed_msg += f"<b>Link: </b><code>{url}</code>"
-                        sendRss(feed_msg, context.bot)
-                        feed_count += 1
-                        sleep(5)
+                if RSS_COMMAND is not None:
+                    feed_msg = f"{RSS_COMMAND} {url}"
+                else:
+                    feed_msg = f"<b>Name: </b><code>{rss_d.entries[feed_count]['title'].replace('>', '').replace('<', '')}</code>\n\n"
+                    feed_msg += f"<b>Link: </b><code>{url}</code>"
+                sendRss(feed_msg, context.bot)
+                feed_count += 1
+                sleep(5)
             DbManger().rss_update(name, str(last_link), str(last_title))
             with rss_dict_lock:
                 rss_dict[name] = [data[0], str(last_link), str(last_title), data[3]]
