@@ -243,8 +243,7 @@ def scrapper(update, context):
         res = rget(link)
         soup = BeautifulSoup(res.text, 'html.parser')
         mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
-        for hy in mystx:
-            links.append(hy['href'])
+        links = [link['href'] for link in mystx if 'magnet:?xt=urn' in link['href']]
         for txt in links:
             sendMessage(txt, context.bot, update.message)
 
