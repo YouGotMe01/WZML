@@ -190,63 +190,63 @@ def rss_set_update(update, context):
 
 def rss_monitor(context):
     with rss_dict_lock:
-        if not rss_dict:
+        if len(rss_dict) == 0:
             rss_job.enabled = False
             return
-
-        for name, data in rss_dict.items():
-            try:
-                rss_d = feedparser.parse(data[0])
-                last_link = rss_d.entries[0].get('link')
-                last_title = rss_d.entries[0].get('title')
-
-                if data[1] == last_link or data[2] == last_title:
-                    continue
-
-                feed_count = 0
-                while True:
-                    try:
-                        if data[1] == rss_d.entries[feed_count]['link'] or data[2] == rss_d.entries[feed_count]['title']:
-                            break
-                    except IndexError:
-                        LOGGER.warning(f"Reached max index for feed: {name}. Adjust RSS_DELAY if necessary.")
-                        break
-
-                    parse = True
-                    for item in data[3]:
-                        if not any(keyword in rss_d.entries[feed_count]['title'].lower() for keyword in item):
-                            parse = False
-                            feed_count += 1
-                            break
-
-                    if not parse:
-                        continue
-
-                    url = rss_d.entries[feed_count].get('links', [])[1].get('href')
-                    if not url:
-                        url = rss_d.entries[feed_count].get('link')
-                        res = rget(url)
-                        soup = BeautifulSoup(res.text, 'html.parser')
-                        magnet_links = soup.select('a[href^="magnet:?xt=urn:btih:"]')
-                        for link in magnet_links:
-                            magnet_url = link['href']
-                            if RSS_COMMAND:
-                                feed_msg = f"{RSS_COMMAND} {magnet_url}\nTag: @isaiminiprime_admin 6143946435"
-                            else:
-                                feed_msg = f"<b>Name: </b><code>{rss_d.entries[feed_count]['title'].replace('>', '').replace('<', '')}</code>\n\n"
-                                feed_msg += f"<b>Link: </b><code>{url}</code>"
-                            sendRss(feed_msg, context.bot)
-                            feed_count += 1
-                            sleep(5)
-
-                DbManger().rss_update(name, str(last_link), str(last_title))
-                with rss_dict_lock:
-                    rss_dict[name] = [data[0], str(last_link), str(last_title), data[3]]
-                LOGGER.info(f"Feed Name: {name}")
-                LOGGER.info(f"Last item: {last_link}")
-            except Exception as e:
-                LOGGER.error(f"{e} Feed Name: {name} - Feed Link: {data[0]}")
+    for title, data in list(rss_dict.items()):
+        try:
+            rss_d = feedparse(data['link'])
+            last_link = rss_d.entries[0]['link']
+            last_title = rss_d.entries[0]['title']
+            if data['last_feed'] == last_link or data['last_title'] == last_title:
                 continue
+            feed_count = 0
+            while True:
+                try:
+                    if data['last_feed'] == rss_d.entries[feed_count]['link'] or \
+                       data['last_title'] == rss_d.entries[feed_count]['title']:
+                        break
+                except IndexError:
+                    LOGGER.warning(f"Reached Max index no. {feed_count} for this feed: {title}. Maybe you need to use less RSS_DELAY to not miss some torrents")
+                    break
+                parse = True
+                for flist in data['filters']:
+                    if all(x not in str(rss_d.entries[feed_count]['title']).lower() for x in flist):
+                        parse = False
+                        feed_count += 1
+                        break
+                if not parse:
+                    continue
+                try:
+                    url = rss_d.entries[feed_count]['links'][1]['href']
+                except IndexError:
+                    url = rss_d.entries[feed_count]['link']
+                if RSS_COMMAND := config_dict['RSS_COMMAND']:
+                    res = rget(url)
+                    soup = BeautifulSoup(res.text, 'html.parser')
+                    mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
+                    for hy in mystx:
+                        linkz.append(hy['href'])
+                        sendRss(feed_msg, context.bot)
+                    for mag in linkz:
+                        feed_msg = f"{RSS_COMMAND} {mag}"
+                        sendRss(feed_msg, context.bot)
+                else:
+                    feed_msg = f"<b>Name: </b><code>{rss_d.entries[feed_count]['title'].replace('>', '').replace('<', '')}</code>\n\n"
+                    feed_msg += f"<b>Link: </b><code>{url}</code>"
+                    sendRss(feed_msg, context.bot)
+                feed_count += 1
+                sleep(5)
+            with rss_dict_lock:
+                if title not in rss_dict:
+                    continue
+                rss_dict[title].update({'last_feed': last_link, 'last_title': last_title})
+            DbManger().rss_update(title)
+            LOGGER.info(f"Feed Name: {title}")
+            LOGGER.info(f"Last item: {last_link}")
+        except Exception as e:
+            LOGGER.error(f"{e} Feed Name: {title} - Feed Link: {data['link']}")
+            continue
 
 if DB_URI is not None and RSS_CHAT_ID is not None:
     rss_list_handler = CommandHandler(BotCommands.RssListCommand, rss_list, filters=CustomFilters.owner_filter | CustomFilters.sudo_user, run_async=True)
