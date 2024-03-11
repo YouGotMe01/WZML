@@ -227,7 +227,6 @@ def rss_monitor(context):
                     mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
                     for hy in mystx:
                         linkz.append(hy['href'])
-                        sendRss(feed_msg, context.bot)
                     for mag in linkz:
                         feed_msg = f"{RSS_COMMAND} {mag}"
                         sendRss(feed_msg, context.bot)
