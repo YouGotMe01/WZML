@@ -11,7 +11,6 @@ from requests import get as rget, head as rhead
 from bs4 import BeautifulSoup, NavigableString, Tag
 import time
 from telegram import Message
-from selenium import webdriver
 from telegram.ext import CommandHandler
 from bot import LOGGER, dispatcher, PAID_SERVICE, PAID_USERS, OWNER_ID
 from bot.helper.telegram_helper.filters import CustomFilters
@@ -241,16 +240,8 @@ def scrapper(update, context):
                       sendMessage(gd_txt, context.bot, update.message)
          
     else:
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')  # Run Chrome in headless mode, without opening a window
-        options.add_argument('--no-sandbox')  # Bypass OS security model
-        options.add_argument('--disable-dev-shm-usage')  # Overcome limited resource problems
-        driver = webdriver.Chrome(options=options)
-        driver.get(link)
-        time.sleep(10)
-        html = driver.page_source
-        driver.quit()
-        soup = BeautifulSoup(html, 'html.parser')
+        res = rget(link)
+        soup = BeautifulSoup(res.text, 'html.parser')
         mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
         links = [link['href'] for link in mystx if 'magnet:?xt=urn' in link['href']]
         for txt in links:
