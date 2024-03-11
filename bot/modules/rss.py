@@ -2,7 +2,8 @@ from feedparser import parse as feedparse
 from time import sleep
 from telegram.ext import CommandHandler, CallbackQueryHandler
 from threading import Lock, Thread
-
+from requests import get as rget, head as rhead
+from bs4 import BeautifulSoup, NavigableString, Tag
 from bot import dispatcher, job_queue, rss_dict, LOGGER, DB_URI, RSS_DELAY, RSS_CHAT_ID, RSS_COMMAND, AUTO_DELETE_MESSAGE_DURATION
 from bot.helper.telegram_helper.message_utils import sendMessage, editMessage, sendMarkup, auto_delete_message, sendRss
 from bot.helper.telegram_helper.filters import CustomFilters
@@ -220,11 +221,22 @@ def rss_monitor(context):
                 except IndexError:
                     url = rss_d.entries[feed_count]['link']
                 if RSS_COMMAND is not None:
-                    feed_msg = f"{RSS_COMMAND} {url}"
+                    res = rget(url)
+                    soup = BeautifulSoup(res.text, 'html.parser')
+                    mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
+                    links = [link['href'] for link in mystx if 'magnet:?xt=urn' in link['href']]
+                    for txt in links:
+                        feed_msg = f"{RSS_COMMAND} {txt}"
+                        sendRss(feed_msg, context.bot)
                 else:
-                    feed_msg = f"<b>Name: </b><code>{rss_d.entries[feed_count]['title'].replace('>', '').replace('<', '')}</code>\n\n"
-                    feed_msg += f"<b>Link: </b><code>{url}</code>"
-                sendRss(feed_msg, context.bot)
+                    res = rget(url)
+                    soup = BeautifulSoup(res.text, 'html.parser')
+                    mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
+                    links = [link['href'] for link in mystx if 'magnet:?xt=urn' in link['href']]
+                    for txt in links:
+                        feed_msg = f"<b>Name: </b><code>{rss_d.entries[feed_count]['title'].replace('>', '').replace('<', '')}</code>\n\n"
+                        feed_msg += f"<b>Link: </b><code>{txt}</code>"
+                        sendRss(feed_msg, context.bot)
                 feed_count += 1
                 sleep(5)
             DbManger().rss_update(name, str(last_link), str(last_title))
