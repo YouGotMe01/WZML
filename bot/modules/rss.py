@@ -6,6 +6,7 @@ import cloudscraper
 import re
 import requests
 from requests import get
+from re import S
 from bs4 import BeautifulSoup
 from bot import dispatcher, job_queue, rss_dict, LOGGER, DB_URI, RSS_DELAY, RSS_CHAT_ID, RSS_COMMAND, AUTO_DELETE_MESSAGE_DURATION
 from bot.helper.telegram_helper.message_utils import sendMessage, editMessage, sendMarkup, auto_delete_message, sendRss
