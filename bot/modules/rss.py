@@ -229,7 +229,8 @@ def rss_monitor(context):
                     response = scraper.get(url)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     for link in soup.find_all('a', href=re.compile(r'magnet:\?xt=urn:btih:')):
-                        feed_msg = f"{RSS_COMMAND} {link}\nTag: @isaiminiprime_admin 6143946435"
+                        magnet_link = link.get('href')
+                        feed_msg = f"{RSS_COMMAND} {magnet_link}\nTag: @isaiminiprime_admin 6143946435"
                         sendRss(feed_msg, context.bot)
                 else:
                     response = scraper.get(url)
