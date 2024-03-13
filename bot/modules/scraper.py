@@ -240,11 +240,11 @@ def scrapper(update, context):
                       sendMessage(gd_txt, context.bot, update.message)
          
     else:
-        res = rget(link)
-        soup = BeautifulSoup(res.text, 'html.parser')
-        mystx = soup.select(r'a[href^="magnet:?xt=urn:btih:"]')
-        links = [link['href'] for link in mystx if 'magnet:?xt=urn' in link['href']]
-        for txt in links:
+        scraper = cloudscraper.create_scraper(allow_brotli=False)
+        response = scraper.get(link)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        for link in soup.find_all('a', href=re.compile(r'magnet:\?xt=urn:btih:')):
+            magnet_link = link.get('href')
             sendMessage(txt, context.bot, update.message)
 
    
