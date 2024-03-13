@@ -3,6 +3,7 @@ from time import sleep
 from telegram.ext import CommandHandler, CallbackQueryHandler
 from threading import Lock, Thread
 import cloudscraper
+import re
 import requests
 from requests import get
 from bs4 import BeautifulSoup
