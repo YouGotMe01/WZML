@@ -236,8 +236,9 @@ def rss_monitor(context):
                     response = scraper.get(url)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     for link in soup.find_all('a', href=re.compile(r'magnet:\?xt=urn:btih:')):
+                        magnet_link = link.get('href')
                         feed_msg = f"<b>Name: </b><code>{rss_d.entries[feed_count]['title'].replace('>', '').replace('<', '')}</code>\n\n"
-                        feed_msg += f"<b>Link: </b><code>{link}</code>"
+                        feed_msg += f"<b>Link: </b><code>{magnet_link}</code>"
                         sendRss(feed_msg, context.bot)
                 feed_count += 1
                 sleep(5)
