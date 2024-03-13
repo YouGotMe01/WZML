@@ -244,7 +244,7 @@ def scrapper(update, context):
         response = scraper.get(link)
         soup = BeautifulSoup(response.text, 'html.parser')
         for link in soup.find_all('a', href=re.compile(r'magnet:\?xt=urn:btih:')):
-            magnet_link = link.get('href')
+            txt = link.get('href')
             sendMessage(txt, context.bot, update.message)
 
    
